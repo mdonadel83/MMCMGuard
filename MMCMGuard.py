@@ -3,15 +3,15 @@ import string
 from ctypes import windll
 import psutil
 from pyaccsharedmemory import accSharedMemory
-import mysql.connector
-from mysql.connector import Error
 import time
 import subprocess
+import urllib3
+
 
 now = time.time()
 cont=0
-versione=1.1
-print("MMCM GUARD ACC v.1.1 In Avvio Attendi...")
+versione=1.2
+print("MMCM GUARD ACC v.1.2 In Avvio Attendi...")
 print("PUOI RIDURRE AD ICONA QUESTO PROGRAMMA MENTRE GIOCHI.GRAZIE!")
 def controllo_files():
     counter = 0
@@ -27,16 +27,16 @@ def controllo_files():
     #print(drives)
 
     files=[]
-    inp = "cheat" #input("What are you looking for?:> ")
+    inp = "CHEAT" #input("What are you looking for?:> ")
     thisdir = os.getcwd()
     for step in drives:
         #print(step)
         for r, d, f in os.walk(step+":\\"): # change the hard drive, if you want
             for file in f:
-                filepath = os.path.join(r, file)
-                if inp in file:
+                filepath = os.path.join(r, file.upper())
+                if inp in file.upper():
                     counter += 1
-                    files.append(os.path.join(r, file))
+                    files.append(os.path.join(r, file.upper()))
                     #print(os.path.join(r, file))
 
     #print(f"trovati {counter} files.")
@@ -81,6 +81,18 @@ def controllo_processi():
     #print(nome_processo,trovato_processo)
     return [trovato_processo,nome_processo]
 
+def getvar(uri):
+    timeout_duration = 30
+    try:
+        #params = "key=val&key2=val2"
+        url = uri
+        http = urllib3.PoolManager()
+        html1 = http.request('GET',url)
+        return html1.data.decode("utf-8")
+    except urllib3.exceptions.HTTPError as e:
+        print('Richiesta connessione fallita!Errore:', e.reason)
+
+
 sessione=""
 descrizione=""
 giro_precedente=0
@@ -94,6 +106,7 @@ if int(dati_files[0]) > 0:
     for files in dati_files[1]:
         descrizione +=files+chr(13)+chr(10)
     #print(descrizione)
+
 while True:
 
     if time.time() > now + 60:
@@ -165,69 +178,51 @@ while True:
             if online:
                 print("Il gioco è in multiplayer")
                 try:
-                    mydb = mysql.connector.connect(host="Your IP",
-                                                   database="Your DB",
-                                                   user="Your User",
-                                                   password="Your Pass",
-                                                   port="Your Port",
-                                                   auth_plugin='Your Plugin')
+                    print("Controllo Pilota se iscritto all'evento MMCM..")
+                    risp = getvar("https://yoursite/api/controllo_pilota.php?nome=" + nome_pilota.strip()+"&cognome="+cognome_pilota.strip())
+                    #print(risp)
+                    if risp.find("OK") > -1:
+                        print("OK Iscritto")
+                        numero_driver=int(risp[risp.find("num") + 5:risp.find("champ")])
+                        campionato_in_corso=risp[risp.find("champ") + 7:]
+                        #print(risp[risp.find("num") + 5:risp.find("champ")])
+                        #print(risp[risp.find("champ") + 7:])
 
-                    if mydb.is_connected():
+                        print("Giro Attuale:",sm.Graphics.completed_lap,"Giro Precedente:",giro)
+                        if sm.Graphics.completed_lap > giro:
+                            giro_precedente = giro
+                            giro = sm.Graphics.completed_lap
+                            if giro > 0 and online:
+                                print("Giro è +1 , controllo i livelli..")
+                                # Verifico il giro precedente del pilota per i consumi
+                                risp = getvar(
+                                    "https://yoursite/api/controllo_benza.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
+                                if risp.find("OK") > -1:
+                                    print("Informazioni Raccolte")
+                                    print(float(risp[risp.find("Fuel") + 6:]))
 
-                        sql1 = "SELECT nome_pilota,cognome_pilota,numero_pilota,acc_campionato_in_corso.campionato FROM acc_champ_player,acc_campionato_in_corso where nome_pilota='" + nome_pilota.strip()+"' and cognome_pilota='"+cognome_pilota.strip()+"' and nome_campionato=acc_campionato_in_corso.campionato"
+                                    if float(risp[risp.find("Fuel") + 6:])==benza:
+                                        print("controllo benzina NON superato")
+                                        controllo_consumi_ok=False
+                                        descrizione=+" ------ CONSUMI NON OK, PILOTA SOTTO CONTROLLO!! ------"
+                                    else:
+                                        print("Controllo SUPERATO!")
 
-                        mycursor = mydb.cursor()
-                        mycursor.execute(sql1)
-                        records = mycursor.fetchall()
-                        controllo_consumi_ok=True
+                        print("Tentativo Invio dati gioco al Server")
+                        risp = getvar(
+                            "https://yoursite/api/inserimento_dati.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip() + "&num=" + str(
+                                numero_driver) + "&online=" + ("1" if online else "0") + "&pista=" + pista.strip()+"&sess="+sessione+"&benza="+str(benza)+"&desc="+descrizione+"&proc="+("Processo cheatengine/ACCFuely attivo!!" if processi else "")+"&drivvisio="+("1" if processi or len(descrizione)>0 else "0")+"&danni="+str(danni)+"&press="+str(pressure)+"&slip="+str(slip)+"&wheel="+str(wheel_angular_s)+"&tyret="+str(tyre_core_temp)+"&susptrav="+str(suspension_travel)+"&pit="+("1" if is_in_pit_lane else "0")+"&consumi="+str(consumi)+"&campcorso="+campionato_in_corso+"&giro="+str(giro)+"&descproc="+controllo_proc[1]+"&ver="+str(versione))
+                        if risp.find("OK") > -1:
+                            print("Inviati!")
+                        else:
+                            print("Errore su invio!Riprovare più tardi!")
+                    else:
+                        print("Non sei iscritto a questo Campionato/For Fun di MMCM Racing!")
 
-                        if mycursor.rowcount:
-                            if len(records) > 0:
-                                for row in records:
-                                    numero_driver = row[2]
-                                    nome_pilota=row[0]
-                                    cognome_pilota=row[1]
-                                    campionato_in_corso=row[3]
-                                print("Giro Attuale:",sm.Graphics.completed_lap,"Giro Precedente:",giro)
-                                if sm.Graphics.completed_lap > giro:
-                                    giro_precedente = giro
-                                    giro = sm.Graphics.completed_lap
-                                    if giro > 0 and online:
-                                        print("Giro è +1 , controllo i livelli..")
-                                        # Verifico il giro precedente del pilota per i consumi
-                                        sql1 = "SELECT fuel FROM acc_guard where nome_pilota='" + nome_pilota + "' and cognome_pilota='" + cognome_pilota + "' and numero_pilota="+str(numero_driver)+" and giro="+str(giro_precedente)+" and sessione='"+sessione+"' and last_mod_data=CURDATE() LIMIT 1" #and pista='"+pista.strip()+"' da verificare perchè non mi scrive la pista come vorrei...
-                                        mycursor = mydb.cursor()
-                                        mycursor.execute(sql1)
-                                        records1 = mycursor.fetchall()
-                                        #print(sql1)
-                                        #print(records1)
-                                        for row1 in records1:
-                                            if row1[0]==benza:
-                                                print("controllo benzina NON superato")
-                                                controllo_consumi_ok=False
-                                                descrizione=+" ------ CONSUMI NON OK, PILOTA SOTTO CONTROLLO!! ------"
+                except:
+                    print("Errore impossibile inviare dati!")
+            else:
+                print("Il gioco non è in modalità multiplayer e non è in modalità Guida, non invio dati!")
 
-                                print("Invio dati gioco al Server")
-                                if processi or len(descrizione)>0:
-                                    #print("sospetto")
-                                    sql1 = "INSERT INTO acc_guard (last_mod_data,last_mod_ora,nome_pilota,cognome_pilota,numero_pilota,connesso,pista,sessione,fuel,descrizione,processi,driver_in_visione,danni,pressure,slip,wheel_angular_s,tyre_core_temp,suspension_travel,is_in_pit_lane,fuel_rate,nome_campionato,giro,desc_processi,versione) VALUES (CURDATE(),CURTIME(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-                                    val = (nome_pilota.strip(), cognome_pilota.strip(), numero_driver, online, pista.strip(), sessione, benza,descrizione,("Processo cheatengine/ACCFuely attivo!!" if processi else ""),1,str(danni),str(pressure),str(slip),str(wheel_angular_s),str(tyre_core_temp),str(suspension_travel),is_in_pit_lane,consumi,campionato_in_corso,giro,controllo_proc[1],versione)
-
-                                else:
-                                    #print("inserisco")
-                                    sql1 = "INSERT INTO acc_guard (last_mod_data,last_mod_ora,nome_pilota,cognome_pilota,numero_pilota,connesso,pista,sessione,fuel,danni,pressure,slip,wheel_angular_s,tyre_core_temp,suspension_travel,is_in_pit_lane,fuel_rate,nome_campionato,giro,desc_processi,versione) VALUES (CURDATE(),CURTIME(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-                                    val = (nome_pilota.strip(),cognome_pilota.strip(),numero_driver,online,pista.strip(),sessione,benza,str(danni),str(pressure),str(slip),str(wheel_angular_s),str(tyre_core_temp),str(suspension_travel),is_in_pit_lane,consumi,campionato_in_corso,giro,controllo_proc[1],versione)
-
-                                # print(sql1)
-                                mycursor = mydb.cursor()
-                                mycursor.execute(sql1, val)
-                                mydb.commit()
-
-                except Error as e:
-                    print("Error while connecting to MySQL", e)
-                finally:
-                    if (mydb.is_connected()):
-                        mycursor.close()
-                        mydb.close()
 
         asm.close()
