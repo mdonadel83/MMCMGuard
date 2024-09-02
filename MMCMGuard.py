@@ -10,7 +10,8 @@ import subprocess
 
 now = time.time()
 cont=0
-print("MMCM GUARD ACC In Avvio Attendi...")
+versione=1.1
+print("MMCM GUARD ACC v.1.1 In Avvio Attendi...")
 print("PUOI RIDURRE AD ICONA QUESTO PROGRAMMA MENTRE GIOCHI.GRAZIE!")
 def controllo_files():
     counter = 0
@@ -78,7 +79,7 @@ def controllo_processi():
                 trovato_processo = True
                 nome_processo += line.decode().rstrip().lower() + chr(13) + chr(10)
     #print(nome_processo,trovato_processo)
-    return trovato_processo
+    return [trovato_processo,nome_processo]
 
 sessione=""
 descrizione=""
@@ -96,8 +97,8 @@ if int(dati_files[0]) > 0:
 while True:
 
     if time.time() > now + 60:
-
-        if controllo_processi():
+        controllo_proc=controllo_processi()
+        if controllo_proc[0]:
             processi=True
         else:
             processi=False
@@ -209,13 +210,13 @@ while True:
                                 print("Invio dati gioco al Server")
                                 if processi or len(descrizione)>0:
                                     #print("sospetto")
-                                    sql1 = "INSERT INTO acc_guard (last_mod_data,last_mod_ora,nome_pilota,cognome_pilota,numero_pilota,connesso,pista,sessione,fuel,descrizione,processi,driver_in_visione,danni,pressure,slip,wheel_angular_s,tyre_core_temp,suspension_travel,is_in_pit_lane,fuel_rate,nome_campionato,giro) VALUES (CURDATE(),CURTIME(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-                                    val = (nome_pilota.strip(), cognome_pilota.strip(), numero_driver, online, pista.strip(), sessione, benza,descrizione,("Processo cheatengine/ACCFuely attivo!!" if processi else ""),1,str(danni),str(pressure),str(slip),str(wheel_angular_s),str(tyre_core_temp),str(suspension_travel),is_in_pit_lane,consumi,campionato_in_corso,giro)
+                                    sql1 = "INSERT INTO acc_guard (last_mod_data,last_mod_ora,nome_pilota,cognome_pilota,numero_pilota,connesso,pista,sessione,fuel,descrizione,processi,driver_in_visione,danni,pressure,slip,wheel_angular_s,tyre_core_temp,suspension_travel,is_in_pit_lane,fuel_rate,nome_campionato,giro,desc_processi,versione) VALUES (CURDATE(),CURTIME(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                                    val = (nome_pilota.strip(), cognome_pilota.strip(), numero_driver, online, pista.strip(), sessione, benza,descrizione,("Processo cheatengine/ACCFuely attivo!!" if processi else ""),1,str(danni),str(pressure),str(slip),str(wheel_angular_s),str(tyre_core_temp),str(suspension_travel),is_in_pit_lane,consumi,campionato_in_corso,giro,controllo_proc[1],versione)
 
                                 else:
                                     #print("inserisco")
-                                    sql1 = "INSERT INTO acc_guard (last_mod_data,last_mod_ora,nome_pilota,cognome_pilota,numero_pilota,connesso,pista,sessione,fuel,danni,pressure,slip,wheel_angular_s,tyre_core_temp,suspension_travel,is_in_pit_lane,fuel_rate,nome_campionato,giro) VALUES (CURDATE(),CURTIME(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-                                    val = (nome_pilota.strip(),cognome_pilota.strip(),numero_driver,online,pista.strip(),sessione,benza,str(danni),str(pressure),str(slip),str(wheel_angular_s),str(tyre_core_temp),str(suspension_travel),is_in_pit_lane,consumi,campionato_in_corso,giro)
+                                    sql1 = "INSERT INTO acc_guard (last_mod_data,last_mod_ora,nome_pilota,cognome_pilota,numero_pilota,connesso,pista,sessione,fuel,danni,pressure,slip,wheel_angular_s,tyre_core_temp,suspension_travel,is_in_pit_lane,fuel_rate,nome_campionato,giro,desc_processi,versione) VALUES (CURDATE(),CURTIME(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                                    val = (nome_pilota.strip(),cognome_pilota.strip(),numero_driver,online,pista.strip(),sessione,benza,str(danni),str(pressure),str(slip),str(wheel_angular_s),str(tyre_core_temp),str(suspension_travel),is_in_pit_lane,consumi,campionato_in_corso,giro,controllo_proc[1],versione)
 
                                 # print(sql1)
                                 mycursor = mydb.cursor()
