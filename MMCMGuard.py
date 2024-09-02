@@ -179,7 +179,7 @@ while True:
                 print("Il gioco è in multiplayer")
                 try:
                     print("Controllo Pilota se iscritto all'evento MMCM..")
-                    risp = getvar("https://yoursite/api/controllo_pilota.php?nome=" + nome_pilota.strip()+"&cognome="+cognome_pilota.strip())
+                    risp = getvar("https://yoursite/api/control_pilot.php?nome=" + nome_pilota.strip()+"&cognome="+cognome_pilota.strip())
                     #print(risp)
                     if risp.find("OK") > -1:
                         print("OK Iscritto")
@@ -196,7 +196,7 @@ while True:
                                 print("Giro è +1 , controllo i livelli..")
                                 # Verifico il giro precedente del pilota per i consumi
                                 risp = getvar(
-                                    "https://yoursite/api/controllo_benza.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
+                                    "https://yoursite/api/control_benza.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
                                 if risp.find("OK") > -1:
                                     print("Informazioni Raccolte")
                                     print(float(risp[risp.find("Fuel") + 6:]))
@@ -210,7 +210,7 @@ while True:
 
                         print("Tentativo Invio dati gioco al Server")
                         risp = getvar(
-                            "https://yoursite/api/inserimento_dati.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip() + "&num=" + str(
+                            "https://yoursite/api/ins_dati.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip() + "&num=" + str(
                                 numero_driver) + "&online=" + ("1" if online else "0") + "&pista=" + pista.strip()+"&sess="+sessione+"&benza="+str(benza)+"&desc="+descrizione+"&proc="+("Processo cheatengine/ACCFuely attivo!!" if processi else "")+"&drivvisio="+("1" if processi or len(descrizione)>0 else "0")+"&danni="+str(danni)+"&press="+str(pressure)+"&slip="+str(slip)+"&wheel="+str(wheel_angular_s)+"&tyret="+str(tyre_core_temp)+"&susptrav="+str(suspension_travel)+"&pit="+("1" if is_in_pit_lane else "0")+"&consumi="+str(consumi)+"&campcorso="+campionato_in_corso+"&giro="+str(giro)+"&descproc="+controllo_proc[1]+"&ver="+str(versione))
                         if risp.find("OK") > -1:
                             print("Inviati!")
