@@ -10,8 +10,8 @@ import urllib3
 
 now = time.time()
 cont=0
-versione=1.3
-print("MMCM GUARD ACC v.1.3 In Avvio Attendi...")
+versione=1.4
+print("MMCM GUARD ACC v.1.4 In Avvio Attendi...")
 print("PUOI RIDURRE AD ICONA QUESTO PROGRAMMA MENTRE GIOCHI.GRAZIE!")
 def controllo_files():
     counter = 0
@@ -108,7 +108,7 @@ if int(dati_files[0]) > 0:
     #print(descrizione)
 asm = accSharedMemory()
 while True:
-
+    #print("controllo asm",asm)
     if time.time() > now + 60:
         controllo_proc=controllo_processi()
         if controllo_proc[0]:
@@ -121,7 +121,7 @@ while True:
 
 
         sm = asm.read_shared_memory()
-
+        #print(sm)
         if (sm is not None):
             #print("entro")
             nome_pilota = sm.Static.player_name
@@ -223,6 +223,8 @@ while True:
                     print("Errore impossibile inviare dati!")
             else:
                 print("Il gioco non è in modalità multiplayer e non è in modalità Guida, non invio dati!")
+        else:
+            print("Non ricevo dati!Ritento più tardi...")
 
-
-        sm.close()
+        #sm.close()
+asm.close()
