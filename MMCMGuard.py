@@ -86,7 +86,7 @@ def controllo_processi():
             if processName1.lower() in line.decode().rstrip().lower():
                 trovato_processo = True
                 nome_processo += line.decode().rstrip().lower() + chr(13) + chr(10)
-            if processName2.lower() in pinfo['name'].lower():
+            if processName2.lower() in line.decode().rstrip().lower():
                 trovato_processo = True
                 nome_processo += line.decode().rstrip().lower() + chr(13) + chr(10)
     #print(nome_processo,trovato_processo)
@@ -209,7 +209,6 @@ if risp.find("OK") > -1:
 
                             #Parte da integrare per controllo incrociato tra lista partecipandi online con entrylist e utente connesso
                             print("Controllo pilota nell'entrylist evento")
-                            #print("https://yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num=" + str(numero_driver).strip())
                             risp = getvar(
                                 "https://yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num="+str(numero_driver).strip())
                             if risp.find("OK") > -1:
@@ -238,8 +237,6 @@ if risp.find("OK") > -1:
                                 print("Tentativo Invio dati gioco al Server")
                                 if len(descrizione)>=6001:
                                     descrizione=descrizione[:6000]
-                                #print("https://yoursite/api/inserimento_dati.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
-                                #        numero_driver) + "&online=" + ("1" if online else "0") + "&pista=" + pista.rstrip('\x00')+"&sess="+sessione+"&benza="+str(benza)+"&desc="+descrizione+"&proc="+("Processo cheatengine/ACCFuely attivo!!" if processi else "")+"&drivvisio="+("1" if processi or len(descrizione)>0 else "0")+"&danni="+str(danni)+"&press="+str(pressure)+"&slip="+str(slip)+"&wheel="+str(wheel_angular_s)+"&tyret="+str(tyre_core_temp)+"&susptrav="+str(suspension_travel)+"&pit="+("1" if is_in_pit_lane else "0")+"&consumi="+str(consumi)+"&campcorso="+campionato_in_corso+"&giro="+str(giro)+"&descproc="+controllo_proc[1]+"&ver="+str(versione))
                                 risp = getvar(
                                     "https://yoursite/api/inserimento_dati.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
                                         numero_driver) + "&online=" + ("1" if online else "0") + "&pista=" + pista.rstrip('\x00')+"&sess="+sessione+"&benza="+str(benza)+"&desc="+descrizione+"&proc="+("Processo cheatengine/ACCFuely attivo!!" if processi else "")+"&drivvisio="+("1" if processi or len(descrizione)>0 else "0")+"&danni="+str(danni)+"&press="+str(pressure)+"&slip="+str(slip)+"&wheel="+str(wheel_angular_s)+"&tyret="+str(tyre_core_temp)+"&susptrav="+str(suspension_travel)+"&pit="+("1" if is_in_pit_lane else "0")+"&consumi="+str(consumi)+"&campcorso="+campionato_in_corso+"&giro="+str(giro)+"&descproc="+controllo_proc[1]+"&ver="+str(versione))
