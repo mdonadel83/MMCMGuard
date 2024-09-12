@@ -10,8 +10,8 @@ import urllib3
 
 now = time.time()
 cont=0
-versione=1.5
-print("MMCM GUARD ACC v.1.5 In Avvio Attendi...")
+versione=1.51
+print("MMCM GUARD ACC v.1.5.1 In Avvio Attendi...")
 
 def controllo_files():
     counter = 0
@@ -56,40 +56,46 @@ def controllo_processi():
 
     trovato_processo=False
     nome_processo=""
-    for proc in psutil.process_iter():
+    try:
+        for proc in psutil.process_iter():
 
-        pinfo = proc.as_dict(attrs=['pid', 'name', 'create_time', 'status'])
-        # Check if process name contains the given name string.
-        #print(pinfo['name'].lower())
-        if processName2.lower() in pinfo['name'].lower():
-            trovato_processo = True
-            nome_processo += pinfo['name'].lower() + chr(13) + chr(10)
-        if processName1.lower() in pinfo['name'].lower():
-            trovato_processo=True
-            nome_processo+=pinfo['name'].lower()+chr(13)+chr(10)
-        if processName.lower() in pinfo['name'].lower():
-            trovato_processo=True
-            nome_processo+=pinfo['name'].lower()+chr(13)+chr(10)
+            pinfo = proc.as_dict(attrs=['pid', 'name', 'create_time', 'status'])
+            # Check if process name contains the given name string.
+            #print(pinfo['name'].lower())
+            if processName2.lower() in pinfo['name'].lower():
+                trovato_processo = True
+                nome_processo += pinfo['name'].lower() + chr(13) + chr(10)
+            if processName1.lower() in pinfo['name'].lower():
+                trovato_processo=True
+                nome_processo+=pinfo['name'].lower()+chr(13)+chr(10)
+            if processName.lower() in pinfo['name'].lower():
+                trovato_processo=True
+                nome_processo+=pinfo['name'].lower()+chr(13)+chr(10)
+    except:
+        print("Non è possibile ora verificare i processi1...riprovo")
 
-    cmd = 'powershell "gps | where {$_.MainWindowTitle } | select Description,Id,Path'
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    for line in proc.stdout:
-        if not line.decode()[0].isspace():
-            #print(line.decode().rstrip())
-            # only print lines that are not empty
-            # decode() is necessary to get rid of the binary string (b')
-            # rstrip() to remove `\r\n`
-            #print(line.decode().rstrip())
-            if processName.lower() in line.decode().rstrip().lower():
-                trovato_processo = True
-                nome_processo += line.decode().rstrip().lower() + chr(13) + chr(10)
-            if processName1.lower() in line.decode().rstrip().lower():
-                trovato_processo = True
-                nome_processo += line.decode().rstrip().lower() + chr(13) + chr(10)
-            if processName2.lower() in line.decode().rstrip().lower():
-                trovato_processo = True
-                nome_processo += line.decode().rstrip().lower() + chr(13) + chr(10)
-    #print(nome_processo,trovato_processo)
+    try:
+        cmd = 'powershell "gps | where {$_.MainWindowTitle } | select Description,Id,Path'
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        for line in proc.stdout:
+            if not line.decode()[0].isspace():
+                #print(line.decode().rstrip())
+                # only print lines that are not empty
+                # decode() is necessary to get rid of the binary string (b')
+                # rstrip() to remove `\r\n`
+                #print(line.decode().rstrip())
+                if processName.lower() in line.decode().rstrip().lower():
+                    trovato_processo = True
+                    nome_processo += line.decode().rstrip().lower() + chr(13) + chr(10)
+                if processName1.lower() in line.decode().rstrip().lower():
+                    trovato_processo = True
+                    nome_processo += line.decode().rstrip().lower() + chr(13) + chr(10)
+                if processName2.lower() in line.decode().rstrip().lower():
+                    trovato_processo = True
+                    nome_processo += line.decode().rstrip().lower() + chr(13) + chr(10)
+            #print(nome_processo,trovato_processo)
+    except:
+        print("Non è possibile ora verificare i processi2...riprovo")
     return [trovato_processo,nome_processo]
 
 def getvar(uri):
@@ -209,6 +215,7 @@ if risp.find("OK") > -1:
 
                             #Parte da integrare per controllo incrociato tra lista partecipandi online con entrylist e utente connesso
                             print("Controllo pilota nell'entrylist evento")
+                            #print("https://yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num=" + str(numero_driver).strip())
                             risp = getvar(
                                 "https://yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num="+str(numero_driver).strip())
                             if risp.find("OK") > -1:
@@ -237,6 +244,8 @@ if risp.find("OK") > -1:
                                 print("Tentativo Invio dati gioco al Server")
                                 if len(descrizione)>=6001:
                                     descrizione=descrizione[:6000]
+                                #print("https://yoursite/api/inserimento_dati.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
+                                #        numero_driver) + "&online=" + ("1" if online else "0") + "&pista=" + pista.rstrip('\x00')+"&sess="+sessione+"&benza="+str(benza)+"&desc="+descrizione+"&proc="+("Processo cheatengine/ACCFuely attivo!!" if processi else "")+"&drivvisio="+("1" if processi or len(descrizione)>0 else "0")+"&danni="+str(danni)+"&press="+str(pressure)+"&slip="+str(slip)+"&wheel="+str(wheel_angular_s)+"&tyret="+str(tyre_core_temp)+"&susptrav="+str(suspension_travel)+"&pit="+("1" if is_in_pit_lane else "0")+"&consumi="+str(consumi)+"&campcorso="+campionato_in_corso+"&giro="+str(giro)+"&descproc="+controllo_proc[1]+"&ver="+str(versione))
                                 risp = getvar(
                                     "https://yoursite/api/inserimento_dati.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
                                         numero_driver) + "&online=" + ("1" if online else "0") + "&pista=" + pista.rstrip('\x00')+"&sess="+sessione+"&benza="+str(benza)+"&desc="+descrizione+"&proc="+("Processo cheatengine/ACCFuely attivo!!" if processi else "")+"&drivvisio="+("1" if processi or len(descrizione)>0 else "0")+"&danni="+str(danni)+"&press="+str(pressure)+"&slip="+str(slip)+"&wheel="+str(wheel_angular_s)+"&tyret="+str(tyre_core_temp)+"&susptrav="+str(suspension_travel)+"&pit="+("1" if is_in_pit_lane else "0")+"&consumi="+str(consumi)+"&campcorso="+campionato_in_corso+"&giro="+str(giro)+"&descproc="+controllo_proc[1]+"&ver="+str(versione))
