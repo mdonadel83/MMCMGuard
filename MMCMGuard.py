@@ -308,7 +308,6 @@ if risp.find("OK") > -1:
             else:
                 print("Non ricevo dati!Ritento più tardi...")
 
-            #sm.close()
     asm.close()
 else:
     print(
