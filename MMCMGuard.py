@@ -103,7 +103,7 @@ def controllo_processi():
 def getvarj(url,data):
     try:
         response = requests.post(url, json=data)
-
+        #print(response.status_code)
         # Verificare la risposta
         if response.status_code == 200:
             return str(response.json())
@@ -111,7 +111,7 @@ def getvarj(url,data):
         else:
             return response.status_code
     except:
-        print("Non è possibile ora verificare i processi2...riprovo")
+        print("Non è possibile stabilire una connessione con il sito ora....riprova più tardi!!")
         return "NO"
 
 
@@ -129,7 +129,7 @@ def getvar(uri):
 
 print("Controllo se hai l'ultima Versione Installata...")
 risp = getvar(
-    "https://yoursite/api/controllo_versione_guard.php?ver=" + str(versione).strip())
+    "yoursite/api/controllo_versione_guard.php?ver=" + str(versione).strip())
 print(risp)
 
 if risp.find("OK") > -1:
@@ -221,19 +221,20 @@ if risp.find("OK") > -1:
                     print("Il gioco è in multiplayer")
                     try:
                         print("Controllo Pilota se iscritto all'evento MMCM..")
-                        risp = getvar("https://yoursite/api/controllo_pilota.php?nome=" + nome_pilota.strip()+"&cognome="+cognome_pilota.strip())
+                        risp = getvar("yoursite/api/controllo_pilota.php?nome=" + nome_pilota.strip()+"&cognome="+cognome_pilota.strip())
                         #print(risp)
                         if risp.find("OK") > -1:
                             print("OK Iscritto")
                             numero_driver=int(risp[risp.find("num") + 5:risp.find("champ")])
                             campionato_in_corso=risp[risp.find("champ") + 7:]
-
+                            #print(risp[risp.find("num") + 5:risp.find("champ")])
+                            #print(risp[risp.find("champ") + 7:])
 
                             #Parte da integrare per controllo incrociato tra lista partecipandi online con entrylist e utente connesso
                             print("Controllo pilota nell'entrylist evento")
-
+                            #print("yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num=" + str(numero_driver).strip())
                             risp = getvar(
-                                "https://yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num="+str(numero_driver).strip())
+                                "yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num="+str(numero_driver).strip())
                             if risp.find("OK") > -1:
                                 print(risp)
 
@@ -245,7 +246,7 @@ if risp.find("OK") > -1:
                                         print("Giro è +1 , controllo i livelli..")
                                         # Verifico il giro precedente del pilota per i consumi
                                         risp = getvar(
-                                            "https://yoursite/api/controllo_benza.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
+                                            "yoursite/api/controllo_benza.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
                                         if risp.find("OK") > -1:
                                             print("Informazioni Raccolte")
                                             print(float(risp[risp.find("Fuel") + 6:]))
@@ -258,8 +259,7 @@ if risp.find("OK") > -1:
                                                 print("Controllo SUPERATO!")
 
                                 print("Tentativo Invio dati gioco al Server")
-                                
-                                url = 'https://yoursite/api/insert.php'
+                                url = 'yoursite/api/insert.php'
                                 data = {
                                     'nome': nome_pilota.rstrip('\x00'),
                                     'cognome': cognome_pilota.rstrip('\x00'),
@@ -308,6 +308,7 @@ if risp.find("OK") > -1:
             else:
                 print("Non ricevo dati!Ritento più tardi...")
 
+            #sm.close()
     asm.close()
 else:
     print(
