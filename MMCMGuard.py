@@ -242,7 +242,7 @@ def ciclo_infinito():
         asm = accSharedMemory()
         while True:
             #mostra_messaggio("controllo asm",asm)
-            if time.time() > now + 10:
+            if time.time() > now + 60:
                 controllo_proc=controllo_processi()
                 if controllo_proc[0]:
                     processi=True
