@@ -13,6 +13,9 @@ import tkinter as tk
 from tkinter import scrolledtext
 import threading
 from PIL import Image, ImageTk
+from deep_translator import GoogleTranslator
+import win32com.client
+import pythoncom
 
 
 # Funzione per mostrare i messaggi nella finestra
@@ -113,7 +116,7 @@ def getvar(uri):
 
 translations = {
     "en": {
-        "starting": "MMCM GUARD ACC v.1.5.3 Starting... Please wait...",
+        "starting": "MMCM GUARD ACC v.1.5.4 Starting... Please wait...",
         "version_check": "Checking if you have the latest version installed...",
         "update_available": "You need to install the latest version from GitHub.",
         "version_ok": "Version check passed.",
@@ -147,7 +150,7 @@ translations = {
         "ritento": "No data received!I'll retry after...",
     },
     "it": {
-        "starting": "MMCM GUARD ACC v.1.5.3 In Avvio... Attendi...",
+        "starting": "MMCM GUARD ACC v.1.5.4 In Avvio... Attendi...",
         "version_check": "Controllo se hai l'ultima versione installata...",
         "update_available": "Devi installare l'ultima versione da GitHub.",
         "version_ok": "Controllo della versione superato.",
@@ -206,13 +209,19 @@ if system_lang.startswith("It"):
     current_lang = translations["it"]
 else:
     current_lang = translations["en"]
+nome_pilota=""
+cognome_pilota=""
+numero_driver=0
 
 
 def ciclo_infinito():
+    global nome_pilota
+    global cognome_pilota
+    global numero_driver
 
     now = time.time()
     cont = 0
-    versione = 1.53
+    versione = 1.54
 
     mostra_messaggio("Sistem Language:"+system_lang)
     mostra_messaggio(current_lang["starting"])
@@ -231,6 +240,7 @@ def ciclo_infinito():
         giro_precedente=0
         campionato_in_corso=""
         giro=0
+
         dati_files = controllo_files()
         #mostra_messaggio(dati_files[0])
         if int(dati_files[0]) > 0:
@@ -239,9 +249,11 @@ def ciclo_infinito():
             for files in dati_files[1]:
                 descrizione +=files+chr(13)+chr(10)
             #mostra_messaggio(descrizione)
+        
         asm = accSharedMemory()
         while True:
             #mostra_messaggio("controllo asm",asm)
+
             if time.time() > now + 60:
                 controllo_proc=controllo_processi()
                 if controllo_proc[0]:
@@ -286,7 +298,7 @@ def ciclo_infinito():
 
                         try:
                             mostra_messaggio(current_lang["control_driver"])
-                            risp = getvar("https://yoursite/api/controllo_pilota.php?nome=" + nome_pilota.strip()+"&cognome="+cognome_pilota.strip())
+                            risp = getvar("https://yoursite/api/controllo_pilota.php?nome=" + nome_pilota.rstrip('\x00')+"&cognome="+cognome_pilota.rstrip('\x00'))
                             #mostra_messaggio(risp)
                             if risp.find("OK") > -1:
                                 mostra_messaggio(current_lang["ok"])
@@ -299,7 +311,7 @@ def ciclo_infinito():
                                 mostra_messaggio(current_lang["control_entrylist"])
 
                                 risp = getvar(
-                                    "https://yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num="+str(numero_driver).strip())
+                                    "https://yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver).strip())
                                 if risp.find("OK") > -1:
                                     mostra_messaggio(risp)
 
@@ -311,7 +323,7 @@ def ciclo_infinito():
                                             mostra_messaggio(current_lang["giro"])
                                             # Verifico il giro precedente del pilota per i consumi
                                             risp = getvar(
-                                                "https://yoursite/api/controllo_benza.php?nome=" + nome_pilota.strip() + "&cognome=" + cognome_pilota.strip()+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
+                                                "https://yoursite/api/controllo_benza.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
                                             if risp.find("OK") > -1:
                                                 mostra_messaggio(current_lang["info"])
                                                 mostra_messaggio(float(risp[risp.find("Fuel") + 6:]))
@@ -383,7 +395,55 @@ def ciclo_infinito():
             "***********************************************************************************************************************")
         time.sleep(120)
 
+def ciclo_infinito_message():
+    global nome_pilota
+    global cognome_pilota
+    global numero_driver
+
+    now2 = time.time()
+    #speaker = win32com.client.Dispatch("SAPI.SpVoice")
+    speaker = win32com.client.Dispatch("SAPI.SpVoice", pythoncom.CoInitialize())
+
+    messaggio = "Avvio di MMCM Guard. E di MMCM Race Director Message...Puoi ridurre a icona questo programma mentre giochi. Grazie!"
+    if system_lang.startswith("It"):
+        messaggio = GoogleTranslator(source='auto', target='italian').translate(messaggio)
+    else:
+        messaggio = GoogleTranslator(source='auto', target='english').translate(messaggio)
+    mostra_messaggio(messaggio)
+    speaker.Speak(messaggio)
+    while True:
+
+        if time.time() > now2 + 5 and nome_pilota and cognome_pilota and numero_driver:
+            now2 = time.time()
+            risp = getvar(
+                "https://yoursite/api/controllo_messaggi.php?nome=" + nome_pilota.rstrip(
+                    '\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
+                    numero_driver) )
+            if risp.find("OK") > -1:
+                print(risp[risp.find("Message") + 9:])
+                messaggio =risp[risp.find("Message") + 9:].strip()
+                if len(messaggio)>0:
+                    if system_lang.startswith("It"):
+                        messaggio = GoogleTranslator(source='auto', target='italian').translate(messaggio)
+                    else:
+                        messaggio = GoogleTranslator(source='auto', target='english').translate(messaggio)
+
+                    #invio i dati allo spaeker
+                    speaker.Speak(messaggio)
+
+                    risp = getvar(
+                        "https://yoursite/api/cancello_msg.php?nome=" + nome_pilota.rstrip(
+                            '\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
+                            numero_driver))
+                    #print(risp)
+                    if risp.find("OK") > -1:
+                        mostra_messaggio("Race Director Message --> "+messaggio)
+                    else:
+                        mostra_messaggio("ERROR Message[Race Director] " + messaggio)
+
+
 threading.Thread(target=ciclo_infinito, daemon=True).start()
+threading.Thread(target=ciclo_infinito_message, daemon=True).start()
 
 # Avvia il loop principale di Tkinter
 finestra.mainloop()
