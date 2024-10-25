@@ -26,14 +26,14 @@ def mostra_messaggio(messaggio):
 def controllo_files():
     counter = 0
     mostra_messaggio(current_lang["first_check"])
-
+    print("primo check")
     drives = []
     bitmask = windll.kernel32.GetLogicalDrives()
     for letter in string.ascii_uppercase:
         if bitmask & 1:
             drives.append(letter)
         bitmask >>= 1
-
+    print(drives)
     #mostra_messaggio(drives)
 
     files=[]
@@ -42,16 +42,19 @@ def controllo_files():
 
     thisdir = os.getcwd()
     for step in drives:
+        print(step)
         #mostra_messaggio(step)
         for r, d, f in os.walk(step+":\\"): # change the hard drive, if you want
             for file in f:
+                #print(file)
                 filepath = os.path.join(r, file.upper())
                 if inp in file.upper() or inp1 in file.upper():
                     counter += 1
                     files.append(os.path.join(r, file.upper()))
+                    print(os.path.join(r, file))
                     #mostra_messaggio(os.path.join(r, file))
 
-
+    print("fine")
     #mostra_messaggio(f"trovati {counter} files.")
     return [counter,files]
 
@@ -251,6 +254,7 @@ def ciclo_infinito():
             #mostra_messaggio(descrizione)
         
         asm = accSharedMemory()
+        threading.Thread(target=ciclo_infinito_message, daemon=True).start()
         while True:
             #mostra_messaggio("controllo asm",asm)
 
@@ -404,7 +408,7 @@ def ciclo_infinito_message():
     #speaker = win32com.client.Dispatch("SAPI.SpVoice")
     speaker = win32com.client.Dispatch("SAPI.SpVoice", pythoncom.CoInitialize())
 
-    messaggio = "Avvio di MMCM Guard. E di MMCM Race Director Message...Puoi ridurre a icona questo programma mentre giochi. Grazie!"
+    messaggio = "MMCM Guard attivo, MMCM Race Director Message attivo!Puoi ridurre a icona questo programma mentre giochi. Grazie!"
     if system_lang.startswith("It"):
         messaggio = GoogleTranslator(source='auto', target='italian').translate(messaggio)
     else:
@@ -443,7 +447,8 @@ def ciclo_infinito_message():
 
 
 threading.Thread(target=ciclo_infinito, daemon=True).start()
-threading.Thread(target=ciclo_infinito_message, daemon=True).start()
+
+
 
 # Avvia il loop principale di Tkinter
 finestra.mainloop()
