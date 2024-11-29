@@ -22,9 +22,12 @@ import datetime
 
 
 
+
 # Funzione per mostrare i messaggi nella finestra
 def mostra_messaggio(messaggio):
-    text_area.insert(tk.END, messaggio + '\n')
+    now = datetime.datetime.now()
+    date_time = now.strftime("%H:%M:%S")
+    text_area.insert(tk.END, date_time+":"+messaggio + '\n')
     text_area.see(tk.END)  # Scorri in basso
 
 def controllo_files():
@@ -124,7 +127,7 @@ def getvar(uri):
 
 translations = {
     "en": {
-        "starting": "MMCM GUARD ACC v.1.5.5 Starting... Please wait...",
+        "starting": "MMCM GUARD ACC v.1.5.6 Starting... Please wait...",
         "version_check": "Checking if you have the latest version installed...",
         "update_available": "You need to install the latest version from GitHub.",
         "version_ok": "Version check passed.",
@@ -158,7 +161,7 @@ translations = {
         "ritento": "No data received!I'll retry after...",
     },
     "it": {
-        "starting": "MMCM GUARD ACC v.1.5.5 In Avvio... Attendi...",
+        "starting": "MMCM GUARD ACC v.1.5.6 In Avvio... Attendi...",
         "version_check": "Controllo se hai l'ultima versione installata...",
         "update_available": "Devi installare l'ultima versione da GitHub.",
         "version_ok": "Controllo della versione superato.",
@@ -234,13 +237,13 @@ def ciclo_infinito():
 
     now = time.time()
     cont = 0
-    versione = 1.55
+    versione = 1.56
 
     mostra_messaggio("Sistem Language:"+system_lang)
     mostra_messaggio(current_lang["starting"])
     mostra_messaggio(current_lang["version_check"])
     risp = getvar(
-        "https://www.yoursite/api/controllo_versione_guard.php?ver=" + str(versione).strip())
+        "https://yoursite/api/controllo_versione_guard.php?ver=" + str(versione).strip())
     mostra_messaggio(risp)
     finestra.update()  # Aggiorna la finestra
 
@@ -265,7 +268,7 @@ def ciclo_infinito():
         
         asm = accSharedMemory()
         threading.Thread(target=ciclo_infinito_message, daemon=True).start()
-        threading.Thread(target=listenesckey, daemon=True).start()
+        threading.Thread(target=listen_esc_key, daemon=True).start()
         while True:
             #mostra_messaggio("controllo asm",asm)
             sm = asm.read_shared_memory()
@@ -314,7 +317,7 @@ def ciclo_infinito():
 
                         try:
                             mostra_messaggio(current_lang["control_driver"])
-                            risp = getvar("https://www.yoursite/api/controllo_pilota.php?nome=" + nome_pilota.rstrip('\x00')+"&cognome="+cognome_pilota.rstrip('\x00'))
+                            risp = getvar("https://yoursite/api/controllo_pilota.php?nome=" + nome_pilota.rstrip('\x00')+"&cognome="+cognome_pilota.rstrip('\x00'))
                             #mostra_messaggio(risp)
                             if risp.find("OK") > -1:
                                 mostra_messaggio(current_lang["ok"])
@@ -327,7 +330,7 @@ def ciclo_infinito():
                                 mostra_messaggio(current_lang["control_entrylist"])
 
                                 risp = getvar(
-                                    "https://www.yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver).strip())
+                                    "https://yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver).strip())
                                 if risp.find("OK") > -1:
                                     mostra_messaggio(risp)
 
@@ -339,7 +342,7 @@ def ciclo_infinito():
                                             mostra_messaggio(current_lang["giro"])
                                             # Verifico il giro precedente del pilota per i consumi
                                             risp = getvar(
-                                                "https://www.yoursite/api/controllo_benza.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
+                                                "https://yoursite/api/controllo_benza.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
                                             if risp.find("OK") > -1:
                                                 mostra_messaggio(current_lang["info"])
                                                 mostra_messaggio(float(risp[risp.find("Fuel") + 6:]))
@@ -352,7 +355,7 @@ def ciclo_infinito():
                                                     mostra_messaggio(current_lang["check_passed"])
 
                                     mostra_messaggio(current_lang["tentativo_invio"])
-                                    url = 'https://www.yoursite/api/insert.php'
+                                    url = 'https://yoursite/api/insert.php'
                                     data = {
                                         'nome': nome_pilota.rstrip('\x00'),
                                         'cognome': cognome_pilota.rstrip('\x00'),
@@ -432,7 +435,7 @@ def ciclo_infinito_message():
         if time.time() > now2 + 5 and nome_pilota and cognome_pilota and numero_driver:
             now2 = time.time()
             risp = getvar(
-                "https://www.yoursite/api/controllo_messaggi.php?nome=" + nome_pilota.rstrip(
+                "https://yoursite/api/controllo_messaggi.php?nome=" + nome_pilota.rstrip(
                     '\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
                     numero_driver) )
             if risp.find("OK") > -1:
@@ -449,7 +452,7 @@ def ciclo_infinito_message():
                     speaker.Speak(messaggio)
 
                     risp = getvar(
-                        "https://www.yoursite/api/cancello_msg.php?nome=" + nome_pilota.rstrip(
+                        "https://yoursite/api/cancello_msg.php?nome=" + nome_pilota.rstrip(
                             '\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
                             numero_driver))
                     #print(risp)
@@ -458,28 +461,25 @@ def ciclo_infinito_message():
                     else:
                         mostra_messaggio("ERROR Message[Race Director] " + messaggio)
 
-
-def listenesckey():
-    global nome_pilota
-    global cognome_pilota
-    global numero_driver
-    global sessione_in_corso
-    global session_time_left
+def listen_esc_key():
+    global nome_pilota, cognome_pilota, numero_driver, sessione_in_corso, session_time_left
 
     desired_window = "AC2"
 
-    while True:
-        if keyboard.is_pressed("esc") and str(get_active_window()).strip() == desired_window and sessione_in_corso=="Gara":
+    def on_esc():
+        #print("ESC key pressed!")
+        # Qui puoi mettere il codice per la verifica della finestra e della sessione di gara
+        if str(get_active_window()).strip() == desired_window and sessione_in_corso == "Gara":
+            print("ESC key pressed!Da Assetto Corsa!")
             risp = getvar(
-                "https://www.yoursite/api/controlla_fase_gara.php?nome=" + nome_pilota.rstrip(
+                "https://yoursite/api/controlla_fase_gara.php?nome=" + nome_pilota.rstrip(
                     '\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(numero_driver).strip())
-
 
             if risp.find("OK") > -1:
 
-                desc="You pressed the esc key!"
+                desc = "You pressed the esc key!"
                 print(f'You pressed the esc key!')
-                url = 'https://www.yoursite/api/ins_dati_esc.php'
+                url = 'https://yoursite/api/ins_dati_esc.php'
                 data = {
                     'nome': nome_pilota.rstrip('\x00'),
                     'cognome': cognome_pilota.rstrip('\x00'),
@@ -488,10 +488,10 @@ def listenesckey():
                     'desc': desc,
                 }
                 risp = getvarj(url, data)
-                #print(risp)
+                # print(risp)
 
                 if risp.find("OK") > -1:
-                    messaggio="Tasto ESC durante la gara!"
+                    messaggio = "Tasto ESC durante la gara!"
                     if system_lang.startswith("It"):
                         messaggio = GoogleTranslator(source='auto', target='italian').translate(messaggio)
                     else:
@@ -499,24 +499,28 @@ def listenesckey():
                     mostra_messaggio(messaggio)
 
                 else:
-                    messaggio = "ERROR Non sono riuscito ad inviare i dati del tasto ESC pigiato!"
+                    messaggio = "ERRORE! Non sono riuscito ad inviare i dati del tasto ESC pigiato!"
                     if system_lang.startswith("It"):
                         messaggio = GoogleTranslator(source='auto', target='italian').translate(messaggio)
                     else:
                         messaggio = GoogleTranslator(source='auto', target='english').translate(messaggio)
                     mostra_messaggio(messaggio)
 
-                break
             else:
                 print("Tasto Esc pigiato , ma permesso non siamo in fase Sessione di Gara")
-                messaggio="Tasto Esc pigiato , ma permesso non siamo in fase Sessione di Gara"
+                messaggio = "Tasto Esc pigiato , ma permesso non siamo in fase Sessione di Gara"
                 if system_lang.startswith("It"):
                     messaggio = GoogleTranslator(source='auto', target='italian').translate(messaggio)
                 else:
                     messaggio = GoogleTranslator(source='auto', target='english').translate(messaggio)
                 mostra_messaggio(messaggio)
 
-        #return self.handle_key(key)
+    # Configura il listener
+    keyboard.on_press_key("esc", lambda _: on_esc())
+
+    # Mantieni il programma attivo
+    keyboard.wait()  # Aspetta un evento indefinito, tiene il programma in esecuzione
+
 
 def get_active_window():
     return GetWindowText(GetForegroundWindow())
