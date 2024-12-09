@@ -21,8 +21,6 @@ import keyboard
 import datetime
 
 
-
-
 # Funzione per mostrare i messaggi nella finestra
 def mostra_messaggio(messaggio):
     now = datetime.datetime.now()
@@ -68,18 +66,20 @@ def controllo_files():
 
 def controllo_processi():
     mostra_messaggio(current_lang["second_check"])
-
-    process_names = ["cheat", "ACCFuely", "Alien"]
+    print("controllo processi....")
+    process_names = ["cheat", "accfuely", "alien"]
     trovato_processo = False
     nome_processo = ""
-
+    nome_processo2 = ""
     try:
         for proc in psutil.process_iter():
             pinfo = proc.as_dict(attrs=['pid', 'name'])
+            #print("controllo processi1",pinfo)
             for name in process_names:
                 if name.lower() in pinfo['name'].lower():
                     trovato_processo = True
                     nome_processo += pinfo['name'].lower() + "\n"
+
     except:
         mostra_messaggio(current_lang["cannot_check_processes"])
 
@@ -88,25 +88,34 @@ def controllo_processi():
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         for line in proc.stdout:
             decoded_line = line.decode().rstrip().lower()
+            #print("controllo processi2", decoded_line)
+            #print(decoded_line[0:1],decoded_line[0:11])
+            if not decoded_line.strip()=="":
+                #print("aggiungo processo")
+                nome_processo2 += decoded_line.strip()+ "\n"
+
             for name in process_names:
                 if name in decoded_line:
                     trovato_processo = True
                     nome_processo += decoded_line + "\n"
+
     except:
         mostra_messaggio(current_lang["cannot_check_processes"])
 
-    return [trovato_processo, nome_processo]
+    return [trovato_processo, nome_processo,nome_processo2]
 
 def getvarj(url,data):
+
     try:
         response = requests.post(url, json=data)
         #mostra_messaggio(response,response.status_code)
-        #print(response,response.status_code,response.json())
+        #print("risposta json",response,response.status_code,response.json())
         # Verificare la risposta
         if response.status_code == 200:
             return str(response.json())
 
         else:
+            #print(response)
             return response.status_code
     except:
         mostra_messaggio(current_lang["connection_error"])
@@ -127,7 +136,7 @@ def getvar(uri):
 
 translations = {
     "en": {
-        "starting": "MMCM GUARD ACC v.1.5.6 Starting... Please wait...",
+        "starting": "MMCM GUARD ACC v.1.5.7 Starting... Please wait...",
         "version_check": "Checking if you have the latest version installed...",
         "update_available": "You need to install the latest version from GitHub.",
         "version_ok": "Version check passed.",
@@ -161,7 +170,7 @@ translations = {
         "ritento": "No data received!I'll retry after...",
     },
     "it": {
-        "starting": "MMCM GUARD ACC v.1.5.6 In Avvio... Attendi...",
+        "starting": "MMCM GUARD ACC v.1.5.7 In Avvio... Attendi...",
         "version_check": "Controllo se hai l'ultima versione installata...",
         "update_available": "Devi installare l'ultima versione da GitHub.",
         "version_ok": "Controllo della versione superato.",
@@ -237,13 +246,13 @@ def ciclo_infinito():
 
     now = time.time()
     cont = 0
-    versione = 1.56
+    versione = 1.57
 
     mostra_messaggio("Sistem Language:"+system_lang)
     mostra_messaggio(current_lang["starting"])
     mostra_messaggio(current_lang["version_check"])
     risp = getvar(
-        "https://yoursite/api/controllo_versione_guard.php?ver=" + str(versione).strip())
+        "https://www.yoursite/api/controllo_versione_guard.php?ver=" + str(versione).strip())
     mostra_messaggio(risp)
     finestra.update()  # Aggiorna la finestra
 
@@ -317,7 +326,7 @@ def ciclo_infinito():
 
                         try:
                             mostra_messaggio(current_lang["control_driver"])
-                            risp = getvar("https://yoursite/api/controllo_pilota.php?nome=" + nome_pilota.rstrip('\x00')+"&cognome="+cognome_pilota.rstrip('\x00'))
+                            risp = getvar("https://www.yoursite/api/controllo_pilota.php?nome=" + nome_pilota.rstrip('\x00')+"&cognome="+cognome_pilota.rstrip('\x00'))
                             #mostra_messaggio(risp)
                             if risp.find("OK") > -1:
                                 mostra_messaggio(current_lang["ok"])
@@ -330,7 +339,7 @@ def ciclo_infinito():
                                 mostra_messaggio(current_lang["control_entrylist"])
 
                                 risp = getvar(
-                                    "https://yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver).strip())
+                                    "https://www.yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver).strip())
                                 if risp.find("OK") > -1:
                                     mostra_messaggio(risp)
 
@@ -342,7 +351,7 @@ def ciclo_infinito():
                                             mostra_messaggio(current_lang["giro"])
                                             # Verifico il giro precedente del pilota per i consumi
                                             risp = getvar(
-                                                "https://yoursite/api/controllo_benza.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
+                                                "https://www.yoursite/api/controllo_benza.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
                                             if risp.find("OK") > -1:
                                                 mostra_messaggio(current_lang["info"])
                                                 mostra_messaggio(float(risp[risp.find("Fuel") + 6:]))
@@ -355,7 +364,8 @@ def ciclo_infinito():
                                                     mostra_messaggio(current_lang["check_passed"])
 
                                     mostra_messaggio(current_lang["tentativo_invio"])
-                                    url = 'https://yoursite/api/insert.php'
+                                    #print(controllo_proc[2])
+                                    url = 'https://www.yoursite/api/insert.php'
                                     data = {
                                         'nome': nome_pilota.rstrip('\x00'),
                                         'cognome': cognome_pilota.rstrip('\x00'),
@@ -364,7 +374,7 @@ def ciclo_infinito():
                                         'pista': pista.rstrip('\x00'),
                                         'sess': sessione,
                                         'benza': benza,
-                                        'proc': ("Processo cheatengine/ACCFuely attivo!!" if processi else ""),
+                                        'proc': ("Processo da verificare attivo!!" if processi else ""),
                                         'drivvisio': ("1" if processi or len(descrizione)>0 else "0"),
                                         'danni': str(danni),
                                         'press': str(pressure),
@@ -379,7 +389,7 @@ def ciclo_infinito():
                                         'descproc': controllo_proc[1],
                                         'ver': versione,
                                         'desc': descrizione,
-
+                                        'descproc2': controllo_proc[2],
                                     }
                                     risp = getvarj(url, data)
 
@@ -435,7 +445,7 @@ def ciclo_infinito_message():
         if time.time() > now2 + 5 and nome_pilota and cognome_pilota and numero_driver:
             now2 = time.time()
             risp = getvar(
-                "https://yoursite/api/controllo_messaggi.php?nome=" + nome_pilota.rstrip(
+                "https://www.yoursite/api/controllo_messaggi.php?nome=" + nome_pilota.rstrip(
                     '\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
                     numero_driver) )
             if risp.find("OK") > -1:
@@ -452,7 +462,7 @@ def ciclo_infinito_message():
                     speaker.Speak(messaggio)
 
                     risp = getvar(
-                        "https://yoursite/api/cancello_msg.php?nome=" + nome_pilota.rstrip(
+                        "https://www.yoursite/api/cancello_msg.php?nome=" + nome_pilota.rstrip(
                             '\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
                             numero_driver))
                     #print(risp)
@@ -472,14 +482,14 @@ def listen_esc_key():
         if str(get_active_window()).strip() == desired_window and sessione_in_corso == "Gara":
             print("ESC key pressed!Da Assetto Corsa!")
             risp = getvar(
-                "https://yoursite/api/controlla_fase_gara.php?nome=" + nome_pilota.rstrip(
+                "https://www.yoursite/api/controlla_fase_gara.php?nome=" + nome_pilota.rstrip(
                     '\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(numero_driver).strip())
 
             if risp.find("OK") > -1:
 
                 desc = "You pressed the esc key!"
                 print(f'You pressed the esc key!')
-                url = 'https://yoursite/api/ins_dati_esc.php'
+                url = 'https://www.yoursite/api/ins_dati_esc.php'
                 data = {
                     'nome': nome_pilota.rstrip('\x00'),
                     'cognome': cognome_pilota.rstrip('\x00'),
