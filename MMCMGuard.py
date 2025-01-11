@@ -19,6 +19,13 @@ import pythoncom
 from win32gui import GetWindowText, GetForegroundWindow
 import keyboard
 import datetime
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from comtypes import cast, POINTER
+import win32com.client
+
+# Dizionario per memorizzare i livelli di volume originali
+original_volumes = {}
+CLSCTX_ALL = 23  # Definizione manuale
 
 
 # Funzione per mostrare i messaggi nella finestra
@@ -136,7 +143,7 @@ def getvar(uri):
 
 translations = {
     "en": {
-        "starting": "MMCM GUARD ACC v.1.5.7 Starting... Please wait...",
+        "starting": "MMCM GUARD ACC v.1.5.8 Starting... Please wait...",
         "version_check": "Checking if you have the latest version installed...",
         "update_available": "You need to install the latest version from GitHub.",
         "version_ok": "Version check passed.",
@@ -170,7 +177,7 @@ translations = {
         "ritento": "No data received!I'll retry after...",
     },
     "it": {
-        "starting": "MMCM GUARD ACC v.1.5.7 In Avvio... Attendi...",
+        "starting": "MMCM GUARD ACC v.1.5.8 In Avvio... Attendi...",
         "version_check": "Controllo se hai l'ultima versione installata...",
         "update_available": "Devi installare l'ultima versione da GitHub.",
         "version_ok": "Controllo della versione superato.",
@@ -217,6 +224,7 @@ img_tk = ImageTk.PhotoImage(img)
 
 label_img = tk.Label(finestra, image=img_tk)
 label_img.pack()
+avviso=0
 
 # Crea un'area di testo scorrevole per i messaggi
 text_area = scrolledtext.ScrolledText(finestra, wrap=tk.WORD)
@@ -243,16 +251,17 @@ def ciclo_infinito():
     global numero_driver
     global sessione_in_corso
     global session_time_left
+    global avviso
 
     now = time.time()
     cont = 0
-    versione = 1.57
+    versione = 1.58
 
     mostra_messaggio("Sistem Language:"+system_lang)
     mostra_messaggio(current_lang["starting"])
     mostra_messaggio(current_lang["version_check"])
     risp = getvar(
-        "https://www.yoursite/api/controllo_versione_guard.php?ver=" + str(versione).strip())
+        "https://yoursite/api/controllo_versione_guard.php?ver=" + str(versione).strip())
     mostra_messaggio(risp)
     finestra.update()  # Aggiorna la finestra
 
@@ -326,7 +335,7 @@ def ciclo_infinito():
 
                         try:
                             mostra_messaggio(current_lang["control_driver"])
-                            risp = getvar("https://www.yoursite/api/controllo_pilota.php?nome=" + nome_pilota.rstrip('\x00')+"&cognome="+cognome_pilota.rstrip('\x00'))
+                            risp = getvar("https://yoursite/api/controllo_pilota.php?nome=" + nome_pilota.rstrip('\x00')+"&cognome="+cognome_pilota.rstrip('\x00'))
                             #mostra_messaggio(risp)
                             if risp.find("OK") > -1:
                                 mostra_messaggio(current_lang["ok"])
@@ -339,7 +348,7 @@ def ciclo_infinito():
                                 mostra_messaggio(current_lang["control_entrylist"])
 
                                 risp = getvar(
-                                    "https://www.yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver).strip())
+                                    "https://yoursite/api/controllo_pilota_entry.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver).strip())
                                 if risp.find("OK") > -1:
                                     mostra_messaggio(risp)
 
@@ -351,7 +360,7 @@ def ciclo_infinito():
                                             mostra_messaggio(current_lang["giro"])
                                             # Verifico il giro precedente del pilota per i consumi
                                             risp = getvar(
-                                                "https://www.yoursite/api/controllo_benza.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
+                                                "https://yoursite/api/controllo_benza.php?nome=" + nome_pilota.rstrip('\x00') + "&cognome=" + cognome_pilota.rstrip('\x00')+"&num="+str(numero_driver)+"&giroprec="+str(giro_precedente)+"&sess="+sessione)
                                             if risp.find("OK") > -1:
                                                 mostra_messaggio(current_lang["info"])
                                                 mostra_messaggio(float(risp[risp.find("Fuel") + 6:]))
@@ -365,7 +374,7 @@ def ciclo_infinito():
 
                                     mostra_messaggio(current_lang["tentativo_invio"])
                                     #print(controllo_proc[2])
-                                    url = 'https://www.yoursite/api/insert.php'
+                                    url = 'https://yoursite/api/insert.php'
                                     data = {
                                         'nome': nome_pilota.rstrip('\x00'),
                                         'cognome': cognome_pilota.rstrip('\x00'),
@@ -396,6 +405,8 @@ def ciclo_infinito():
                                     mostra_messaggio(risp)
 
                                     if risp.find("OK") > -1:
+                                        if avviso==0:
+                                            avviso=1
                                         mostra_messaggio(current_lang["data_sent"])
 
                                     else:
@@ -428,24 +439,51 @@ def ciclo_infinito_message():
     global nome_pilota
     global cognome_pilota
     global numero_driver
+    global avviso
 
     now2 = time.time()
     #speaker = win32com.client.Dispatch("SAPI.SpVoice")
     speaker = win32com.client.Dispatch("SAPI.SpVoice", pythoncom.CoInitialize())
 
-    messaggio = "MMCM Guard attivo, MMCM Race Director Message attivo e MMCM verifica tasto ESC in gara attivo!Puoi ridurre a icona questo programma mentre giochi. Grazie!"
-    if system_lang.startswith("It"):
-        messaggio = GoogleTranslator(source='auto', target='italian').translate(messaggio)
-    else:
-        messaggio = GoogleTranslator(source='auto', target='english').translate(messaggio)
-    mostra_messaggio(messaggio)
-    speaker.Speak(messaggio)
+    # Salva i livelli di volume originali e abbassa quelli delle altre applicazioni
+    save_current_volumes()
+
     while True:
 
         if time.time() > now2 + 5 and nome_pilota and cognome_pilota and numero_driver:
+            if avviso==1:
+                save_current_volumes()
+                lower_other_volumes()
+
+                messaggio = "MMCM Guard attivo e connesso, MMCM Race Director Message attivo e MMCM verifica tasto ESC in gara attivo!Puoi ridurre ad icona questo programma mentre giochi. Grazie!"
+                if system_lang.startswith("It"):
+                    messaggio = GoogleTranslator(source='auto', target='italian').translate(messaggio)
+                else:
+                    messaggio = GoogleTranslator(source='auto', target='english').translate(messaggio)
+                mostra_messaggio(messaggio)
+                speaker.Speak(messaggio)
+                # Ripristina i volumi originali al termine
+                restore_volumes()
+                avviso=98
+
+            if avviso == 2:
+                save_current_volumes()
+                lower_other_volumes()
+
+                messaggio = "ATTENZIONE! MMCM Guard non è più connesso!"
+                if system_lang.startswith("It"):
+                    messaggio = GoogleTranslator(source='auto', target='italian').translate(messaggio)
+                else:
+                    messaggio = GoogleTranslator(source='auto', target='english').translate(messaggio)
+                mostra_messaggio(messaggio)
+                speaker.Speak(messaggio)
+                # Ripristina i volumi originali al termine
+                restore_volumes()
+                avviso = 99
+
             now2 = time.time()
             risp = getvar(
-                "https://www.yoursite/api/controllo_messaggi.php?nome=" + nome_pilota.rstrip(
+                "https://yoursite/api/controllo_messaggi.php?nome=" + nome_pilota.rstrip(
                     '\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
                     numero_driver) )
             if risp.find("OK") > -1:
@@ -457,12 +495,13 @@ def ciclo_infinito_message():
                         messaggio = GoogleTranslator(source='auto', target='italian').translate(messaggio)
                     else:
                         messaggio = GoogleTranslator(source='auto', target='english').translate(messaggio)
-
+                    save_current_volumes()
+                    lower_other_volumes()
                     #invio i dati allo spaeker
                     speaker.Speak(messaggio)
-
+                    restore_volumes()
                     risp = getvar(
-                        "https://www.yoursite/api/cancello_msg.php?nome=" + nome_pilota.rstrip(
+                        "https://yoursite/api/cancello_msg.php?nome=" + nome_pilota.rstrip(
                             '\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(
                             numero_driver))
                     #print(risp)
@@ -482,14 +521,14 @@ def listen_esc_key():
         if str(get_active_window()).strip() == desired_window and sessione_in_corso == "Gara":
             print("ESC key pressed!Da Assetto Corsa!")
             risp = getvar(
-                "https://www.yoursite/api/controlla_fase_gara.php?nome=" + nome_pilota.rstrip(
+                "https://yoursite/api/controlla_fase_gara.php?nome=" + nome_pilota.rstrip(
                     '\x00') + "&cognome=" + cognome_pilota.rstrip('\x00') + "&num=" + str(numero_driver).strip())
 
             if risp.find("OK") > -1:
 
                 desc = "You pressed the esc key!"
                 print(f'You pressed the esc key!')
-                url = 'https://www.yoursite/api/ins_dati_esc.php'
+                url = 'https://yoursite/api/ins_dati_esc.php'
                 data = {
                     'nome': nome_pilota.rstrip('\x00'),
                     'cognome': cognome_pilota.rstrip('\x00'),
@@ -534,6 +573,38 @@ def listen_esc_key():
 
 def get_active_window():
     return GetWindowText(GetForegroundWindow())
+
+
+
+def save_current_volumes():
+    """Salva i livelli di volume delle applicazioni attualmente in esecuzione."""
+    global original_volumes
+    sessions = AudioUtilities.GetAllSessions()
+    for session in sessions:
+        if session.Process:
+            app_name = session.Process.name().lower()
+            volume = session.SimpleAudioVolume
+            original_volumes[app_name] = volume.GetMasterVolume()
+
+def lower_other_volumes():
+    """Abbassa il volume di tutte le applicazioni tranne il programma Python."""
+    sessions = AudioUtilities.GetAllSessions()
+    for session in sessions:
+        if session.Process and session.Process.name().lower() != "mmcmguard.exe":  # Ignora il tuo programma
+            volume = session.SimpleAudioVolume
+            volume.SetMasterVolume(0.2, None)  # Abbassa il volume al 20%
+
+def restore_volumes():
+    """Ripristina i livelli di volume originali salvati."""
+    global original_volumes
+    sessions = AudioUtilities.GetAllSessions()
+    for session in sessions:
+        if session.Process:
+            app_name = session.Process.name().lower()
+            if app_name in original_volumes:
+                volume = session.SimpleAudioVolume
+                volume.SetMasterVolume(original_volumes[app_name], None)
+
 
 
 threading.Thread(target=ciclo_infinito, daemon=True).start()
