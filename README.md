@@ -1,5 +1,8 @@
+==========================================================================================================================
 **************IL PROGETTO MMCM GUARD SI CHIUDE**************
-E' ora gestito un nuovo progetto , che si chiama MMCM SimConnect.
+E' ora gestito un nuovo progetto , che si chiama MMCM SimConnect.Non saranno rilasciate nuove release per questo progetto.
+
+-=========================================================================================================================
 
 MMCM Guard è un piccolo semplice software che cerca di bloccare i Cheat su Assetto Corsa Competizione.
 
