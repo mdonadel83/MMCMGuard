@@ -1,5 +1,7 @@
 =====================================================================================================
-**************IL PROGETTO MMCM GUARD SI CHIUDE**************
+
+                                  --MMCM GUARD CHIUDE--
+                   
 E' ora gestito un nuovo progetto , che si chiama MMCM SimConnect.Non saranno rilasciate nuove release per questo progetto.
 
 =====================================================================================================
